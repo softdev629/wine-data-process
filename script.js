@@ -1,4 +1,5 @@
 const readXlsxFile = require("read-excel-file/node");
+const writeXlsxFile = require("write-excel-file/node");
 const fs = require("fs");
 
 // delcares schema of converted json file
@@ -147,6 +148,93 @@ const schema = {
     prop: "expandPalate",
     type: String,
   },
+  product_url: {
+    prop: "productURL",
+    type: String,
+  },
+};
+
+const HEADER_ROW = [
+  {
+    value: "wine_name",
+    fontWeight: "bold",
+  },
+  {
+    value: "rating",
+    fontWeight: "bold",
+  },
+  {
+    value: "flavour_x",
+    fontWeight: "bold",
+  },
+  {
+    value: "flavour_y",
+    fontWeight: "bold",
+  },
+  {
+    value: "wine_type",
+    fontWeight: "bold",
+  },
+  {
+    value: "foodpair",
+    fontWeight: "bold",
+  },
+  {
+    value: "region",
+    fontWeight: "bold",
+  },
+  {
+    value: "occasion",
+    fontWeight: "bold",
+  },
+  {
+    value: "alternative_wine",
+    fontWeight: "bold",
+  },
+  {
+    value: "vinvalue",
+    fontWeight: "bold",
+  },
+  {
+    value: "colour",
+    fontWeight: "bold",
+  },
+  {
+    value: "tastingnote",
+    fontWeight: "bold",
+  },
+  {
+    value: "price",
+    fontWeight: "bold",
+  },
+  {
+    value: "flag_onsale",
+    fontWeight: "bold",
+  },
+];
+
+const getSweetBoldness = (sweetness, boldness) => {
+  if (sweetness === 0 && boldness === 0) return "neutral";
+  let degreeStatement = "";
+
+  if (sweetness === -5) degreeStatement += "very sweet";
+  if (sweetness > -5 && sweetness < -2) degreeStatement += "sweet";
+  if (sweetness > -3 && sweetness < 0) degreeStatement += "semi-sweet";
+  if (sweetness > 0 && sweetness < 3) degreeStatement += "semi-dry";
+  if (sweetness > 2 && sweetness < 5) degreeStatement += "dry";
+  if (sweetness === 5) degreeStatement += "very dry";
+
+  if (boldness === 0) return degreeStatement;
+  if (degreeStatement !== "") degreeStatement += " and ";
+
+  if (boldness === -5) degreeStatement += "very light";
+  if (boldness > -5 && boldness < -2) degreeStatement += "light";
+  if (boldness > -3 && boldness < 0) degreeStatement += "semi-light";
+  if (boldness > 0 && boldness < 3) degreeStatement += "semi-bold";
+  if (boldness > 2 && boldness < 5) degreeStatement += "bold";
+  if (boldness === 5) degreeStatement += "very bold";
+
+  return degreeStatement;
 };
 
 readXlsxFile("./given.xlsx", { schema })
@@ -154,67 +242,72 @@ readXlsxFile("./given.xlsx", { schema })
     if (errors.length !== 0) throw errors;
     const docs = rows.map((row) => {
       const text = `About ${row.description} ${row.vintage} wine
-${row.description} ${row.vintage} has raiting of ${row.raiting}. ${
+    ${row.description} ${row.vintage} has rating of ${row.rating}. ${
         row.description
-      } ${row.vintage} is kind of ${row.flavourX > 0 ? "dry" : "sweet"} ${
-        row.flavourY > 0 ? "bold" : "light"
-      } wine. Type of ${row.description} ${row.vintage} wine is ${
-        row.wineType
-      }. Foods go well with ${row.description} ${row.vintage} is ${
-        row.foodpair1
-      }, ${row.foodpair2}, ${row.foodpair3}, ${row.foodpair4} and ${
-        row.foodpair5
-      }. Foodpair of ${row.description} ${row.vintage} in detail is "${
-        row.foodpair0
-      }". High level categorisation of ${row.description} ${
+      } ${row.vintage} is ${getSweetBoldness(row.flavourX, row.flavourY)}. ${
+        row.description
+      } ${row.vintage} is kind of ${row.wineType}. Food Pair of ${
+        row.description
+      } ${row.vintage} is : ${row.foodpair0}. High level categorisation of ${
+        row.description
+      } ${row.vintage} is ${row.collection.split("|")}. ${row.description} ${
         row.vintage
-      } wine type is ${row.collection.split("|")}. Simply this belongs to ${
-        row.subcollection
-      } wine. ${
+      } is ${row.subcollection}. ${
         row.region !== undefined
-          ? `${row.description} ${row.vintage} comes from ${row.subregion} in ${row.region}.`
-          : `The region ${row.description} ${row.vintage} comes from is not specified.`
-      } ${
+          ? `${row.description} ${row.vintage} comes from ${row.subregion} in ${row.region}. `
+          : ``
+      }${
         row.occasion !== undefined
           ? ` People can drink ${row.description} ${
               row.vintage
             } on the occasion of "${row.occasion
               .split("|")
-              .filter((value) => value !== "")}".`
+              .filter((value) => value !== "")}". `
           : ""
       }${
-        row.ribbon !== undefined ? `This wine is listed as ${row.ribbon}.` : " "
+        row.ribbon !== undefined
+          ? `${row.description} ${row.vintage} is listed as ${row.ribbon}. `
+          : ""
       }${
         row.alternativeWine !== undefined
-          ? `${row.alternativeWine} wine can be used instead of ${row.description} ${row.vintage}.`
+          ? `${row.alternativeWine} wine can be used instead of ${row.description} ${row.vintage}. `
           : ""
-      } ${row.description} ${row.vintage} is ${
+      }${row.description} ${row.vintage} is ${
         row.vinvalue < 0 ? "not " : ""
       }scored as good based on its price. ${row.description} ${
         row.vintage
-      } shows ${row.color.toLowerCase()} color. Tasting note of ${
-        row.description
-      } ${row.vintage} is "${row.tastingNote}". ${row.description} ${
+      } shows ${row.color.toLowerCase()} color. ${row.description} ${
         row.vintage
       } costs $${row.priceSale}. ${row.description} ${
         row.vintage
-      } is scored as ${
-        row.vinValueStore > 0.5 ? "better" : "worse"
-      } than others based on price. ${row.description} ${row.vintage} costs ${
-        row.priceCompStore < 0.5 ? "more expensive" : "cheaper"
-      } than average price. ${row.description} ${row.vintage} has ${
-        row.raitingCompStore > 0.5 ? "better" : "worse"
-      } rating than normal ones. ${row.description} ${
-        row.vintage
       } is currently${
-        row.flagOnSale === 1 ? "" : "not"
-      } on sale. Flavour description of ${row.description} ${row.vintage} is "${
-        row.flavourDescription
-      }. It tastes like ${row.flavourTaste1} and ${row.flavourTaste2}."`;
+        row.flagOnSale === 1 ? "" : " not"
+      } on sale. It can be described as ${row.description} ${
+        row.vintage
+      } is as follows: ${row.tastingNote}. This is production link - <a>${
+        row.productURL
+      }</a>.`;
 
       return text;
     });
-    console.log(docs);
-    // fs.writeFileSync("wineinfo.txt", )
+
+    // const DATA_ROWS = rows.map((row) => [
+    //   { type: String, value: `${row.description} ${row.vintage}` },
+    //   { type: Number, value: row.rating },
+    //   { type: Number, value: row.flavourX },
+    //   { type: Number, value: row.flavourY },
+    //   { type: String, value: row.wineType },
+    //   { type: String, value: row.foodpair0 },
+    //   { type: String, value: `${row.region} ${row.subregion}` },
+    //   { type: String, value: row.occasion },
+    //   { type: String, value: row.alternativeWine },
+    //   { type: Number, value: row.vinValue },
+    //   { type: String, value: row.color },
+    //   { type: String, value: row.tastingNote },
+    //   { type: Number, value: row.priceSale },
+    //   { type: Number, value: row.flagOnSale },
+    // ]);
+    // writeXlsxFile([HEADER_ROW, ...DATA_ROWS], { filePath: "./output.xlsx" });
+    fs.writeFileSync("wineinfo.txt", docs.join("\n\n"));
   })
   .catch((err) => console.log(err));
