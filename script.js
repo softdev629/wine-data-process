@@ -284,9 +284,9 @@ readXlsxFile("./given.xlsx", { schema })
         row.flagOnSale === 1 ? "" : " not"
       } on sale. It can be described as ${row.description} ${
         row.vintage
-      } is as follows: ${row.tastingNote}. This is production link - <a>${
+      } is as follows: ${row.tastingNote}. This is production link - <a href="${
         row.productURL
-      }</a>.`;
+      }">${row.productURL}</a>.`;
 
       return text;
     });
